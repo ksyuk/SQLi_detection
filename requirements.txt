@@ -1,0 +1,6 @@
+numpy
+keras
+gensim
+autopep8
+torch
+scikit-learn

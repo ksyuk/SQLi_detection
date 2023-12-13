@@ -3,4 +3,5 @@ keras
 gensim
 autopep8
 torch
+torchtext
 scikit-learn

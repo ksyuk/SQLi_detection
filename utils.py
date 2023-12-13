@@ -13,13 +13,12 @@ def load_dataset(dataset_path):
     return dataset
 
 
-def train_epoch(network, dataloader, learning_rate, optimizer, loss_fn, epoch, device, dataset_size, report_freq=200):
+def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
     print("traing...")
     network.train()
 
-    learning_rate = learning_rate
-    optimizer = optimizer or torch.optim.Adam(network.parameters(), lr=learning_rate)
-    loss_fn = loss_fn or nn.NLLLoss()
+    optimizer = hyperparams["optimizer"] or torch.optim.Adam(network.parameters(), lr=hyperparams["learning_rate"])
+    loss_fn = hyperparams["loss_fn"] or nn.NLLLoss()
 
     total_loss, accuracy, count = 0, 0, 0
     epoch_count = 0
@@ -43,10 +42,11 @@ def train_epoch(network, dataloader, learning_rate, optimizer, loss_fn, epoch, d
 
             if count / (epoch_count+1) > dataset_size:
                 print("one epoch end")
+                print(f"{count}: accuracy={accuracy.item()/count}")
                 epoch_count += 1
                 break
 
-        if epoch_count == epoch:
+        if epoch_count == hyperparams["epoch"]:
             break
 
     return total_loss.item()/count, accuracy.item()/count

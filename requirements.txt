@@ -1,7 +1,9 @@
+autopep8
+gensim
 numpy
 keras
-gensim
-autopep8
+lightning
 torch
 torchtext
+transformers
 scikit-learn

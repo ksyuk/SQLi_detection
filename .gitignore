@@ -1,5 +1,8 @@
+__pycache__/
 venv/
 dataset/
-__pycache__/
+model/
+lightning_logs/
+
 .DS_Store
 *.pth

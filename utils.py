@@ -2,6 +2,7 @@ import csv
 
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import StepLR
 
 def load_dataset(dataset_path):
     dataset = []
@@ -18,6 +19,8 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
     network.train()
 
     optimizer = hyperparams["optimizer"] or torch.optim.Adam(network.parameters(), lr=hyperparams["learning_rate"])
+    if hyperparams["lr_scheduler"]:
+        lr_scheduler = StepLR(optimizer, hyperparams["lr_scheduler"]["step_size"], hyperparams["lr_scheduler"]["gamma"])
     loss_fn = hyperparams["loss_fn"] or nn.NLLLoss()
 
     total_loss, accuracy, count = 0, 0, 0
@@ -41,9 +44,10 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
                 print(f"{count}: accuracy={accuracy.item()/count}")
 
             if count / (epoch_count+1) > dataset_size:
-                print("one epoch end")
-                print(f"{count}: accuracy={accuracy.item()/count}")
+                print(f"{epoch_count+1} time epoch end")
                 epoch_count += 1
+                if hyperparams["lr_scheduler"]:
+                    lr_scheduler.step()
                 break
 
         if epoch_count == hyperparams["epoch"]:

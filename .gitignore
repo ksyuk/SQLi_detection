@@ -6,3 +6,4 @@ lightning_logs/
 
 .DS_Store
 *.pth
+*.png

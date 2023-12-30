@@ -1,5 +1,6 @@
 import csv
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
@@ -23,8 +24,10 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
         lr_scheduler = StepLR(optimizer, hyperparams["lr_scheduler"]["step_size"], hyperparams["lr_scheduler"]["gamma"])
     loss_fn = hyperparams["loss_fn"] or nn.NLLLoss()
 
-    total_loss, accuracy, count = 0, 0, 0
-    epoch_count = 0
+    total_loss, accuracy = 0, 0
+    count , epoch_count = 0, 0
+    loss_values = []
+
     while True:
         for i, (features, labels) in enumerate(dataloader, 1):
             features, labels = features.to(device), labels.to(device)
@@ -35,7 +38,8 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
 
             loss.backward()
             optimizer.step()
-            total_loss += loss
+            total_loss += loss.item()
+
             _, predicted = torch.max(out, 1)
             accuracy += (predicted==labels).sum()
             count += len(labels)
@@ -45,6 +49,7 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
 
             if count / (epoch_count+1) > dataset_size:
                 print(f"{epoch_count+1} time epoch end")
+                loss_values.append(loss.item())
                 epoch_count += 1
                 if hyperparams["lr_scheduler"]:
                     lr_scheduler.step()
@@ -53,4 +58,10 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
         if epoch_count == hyperparams["epoch"]:
             break
 
-    return total_loss.item()/count, accuracy.item()/count
+    print("loss_values", loss_values)
+    plt.plot(loss_values)
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss')
+    plt.show()
+
+    return total_loss/count, accuracy.item()/count

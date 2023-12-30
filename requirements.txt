@@ -1,6 +1,7 @@
 autopep8
 gensim
 numpy
+matplotlib
 keras
 lightning
 torch

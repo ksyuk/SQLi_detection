@@ -1,9 +1,10 @@
 autopep8
 gensim
+lightning
 numpy
 matplotlib
+openai
 keras
-lightning
 torch
 torchtext
 transformers

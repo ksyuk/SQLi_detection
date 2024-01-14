@@ -1,10 +1,10 @@
 __pycache__/
 venv/
-dataset/
 model/
 lightning_logs/
 
 .DS_Store
 *.pth
 *.png
+*.csv
 result.txt

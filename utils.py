@@ -68,7 +68,7 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
 
     return total_loss/count, accuracy.item()/count
 
-def test(device, model, test_loader, vocab, classes):
+def test(device, model, test_loader, classes):
     with torch.no_grad():
         for batch_idx, (query, label) in enumerate(test_loader):
             query, label = query.to(device), label.to(device)
@@ -96,4 +96,3 @@ def test(device, model, test_loader, vocab, classes):
             print(torch.argmax(pred[batch_idx]))
             print("Actual:\nvalue={}, class_name= {}\n".format(label[batch_idx], classes[label[batch_idx]]))
             print("Predicted:\nvalue={}, class_name= {}\n".format(pred[0].argmax(0),classes[pred[0].argmax(0)]))
-            break

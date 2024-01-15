@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
 
+
 def load_dataset(dataset_path):
     dataset = []
     with open(dataset_path, 'r') as file:
@@ -15,14 +16,14 @@ def load_dataset(dataset_path):
     return dataset
 
 
-def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
+def train_model(network, dataloader, device, dataset_size, report_freq, hyperparams):
     print("traing...")
     network.train()
 
     optimizer = hyperparams["optimizer"] or torch.optim.Adam(network.parameters(), lr=hyperparams["learning_rate"])
+    loss_fn = hyperparams["loss_fn"] or nn.NLLLoss()
     if hyperparams["lr_scheduler"]:
         lr_scheduler = StepLR(optimizer, hyperparams["lr_scheduler"]["step_size"], hyperparams["lr_scheduler"]["gamma"])
-    loss_fn = hyperparams["loss_fn"] or nn.NLLLoss()
 
     total_loss, accuracy = 0, 0
     count, epoch_count = 0, 0
@@ -49,7 +50,7 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
             if i % report_freq == 0:
                 print(f"{count}: accuracy={accuracy.item()/count}")
 
-            if count / (epoch_count+1) > dataset_size:
+            if count > dataset_size * (epoch_count+1):
                 print(f"{epoch_count+1} time epoch end")
                 loss_values.append(loss.item())
                 epoch_count += 1
@@ -60,7 +61,6 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
         if epoch_count == hyperparams["epoch"]:
             break
 
-    print("loss_values", loss_values)
     plt.plot(loss_values)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
@@ -68,9 +68,10 @@ def train(network, dataloader, device, dataset_size, report_freq, hyperparams):
 
     return total_loss/count, accuracy.item()/count
 
-def test(device, model, test_loader, classes):
+
+def test_model(model, test_loader, device):
     with torch.no_grad():
-        for batch_idx, (query, label) in enumerate(test_loader):
+        for query, label in test_loader:
             query, label = query.to(device), label.to(device)
             pred = model(query)
 
@@ -92,7 +93,3 @@ def test(device, model, test_loader, classes):
                         f.write(f'query: {query}\n')
                         f.write(f'output: {pred}\n')
                         f.write('\n')
-
-            print(torch.argmax(pred[batch_idx]))
-            print("Actual:\nvalue={}, class_name= {}\n".format(label[batch_idx], classes[label[batch_idx]]))
-            print("Predicted:\nvalue={}, class_name= {}\n".format(pred[0].argmax(0),classes[pred[0].argmax(0)]))

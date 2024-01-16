@@ -70,26 +70,40 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
 
 
 def test_model(model, test_loader, device):
-    with torch.no_grad():
-        for query, label in test_loader:
-            query, label = query.to(device), label.to(device)
-            pred = model(query)
+    true_positives = 0
+    false_positives = 0
+    true_negatives = 0
+    false_negatives = 0
 
-            if label == "1":
-                if pred == "1":
-                    true_positives += 1
+    with torch.no_grad():
+        for queries, labels, raw_queries in test_loader:
+            queries, labels = queries.to(device), labels.to(device)
+            out = model(queries)
+            _, preds = torch.max(out, 1)
+
+            for label, pred, raw_query in zip(labels, preds, raw_queries):
+                label = label.item()
+                pred = pred.item()
+                if label == 1:
+                    if pred == 1:
+                        true_positives += 1
+                    else:
+                        false_negatives += 1
+                        with open('false_negatives.txt', 'a') as f:
+                            f.write(f'query: {raw_query}\n')
                 else:
-                    false_negatives += 1
-                    with open('false_negatives.txt', 'a') as f:
-                        f.write(f'query: {query}\n')
-                        f.write(f'output: {pred}\n')
-                        f.write('\n')
-            else:
-                if pred == "0":
-                    true_negatives += 1
-                else:
-                    false_positives += 1
-                    with open('false_positives.txt', 'a') as f:
-                        f.write(f'query: {query}\n')
-                        f.write(f'output: {pred}\n')
-                        f.write('\n')
+                    if pred == 0:
+                        true_negatives += 1
+                    else:
+                        false_positives += 1
+                        with open('false_positives.txt', 'a') as f:
+                            f.write(f'query: {raw_query}\n')
+
+    print(f'true_positives: {true_positives}')
+    print(f'false_positives: {false_positives}')
+    print(f'true_negatives: {true_negatives}')
+    print(f'false_negatives: {false_negatives}')
+    print(f'accuracy: {(true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives)}')
+    print(f'precision: {true_positives / (true_positives + false_positives)}')
+    print(f'recall: {true_positives / (true_positives + false_negatives)}')
+    print(f'f1: {2 * true_positives / (2 * true_positives + false_positives + false_negatives)}')

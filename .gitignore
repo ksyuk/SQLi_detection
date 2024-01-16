@@ -8,3 +8,5 @@ lightning_logs/
 *.png
 *.csv
 result.txt
+false_negatives.txt
+false_positives.txt

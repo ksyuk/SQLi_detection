@@ -4,15 +4,21 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
+from transformers import BertForSequenceClassification
 
 
 def load_dataset(dataset_path):
     dataset = []
+    removed = 0
     with open(dataset_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)
         for row in reader:
-            dataset.append(row)
+            if len(row) == 2:
+                dataset.append(row)
+            else:
+                removed += 1
+    print(f"removed: {removed}")
     return dataset
 
 
@@ -28,6 +34,7 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
     total_loss, accuracy = 0, 0
     count, epoch_count = 0, 0
     loss_values = []
+    report_count = []
 
     while True:
         for i, (features, labels) in enumerate(dataloader, 1):
@@ -49,10 +56,11 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
 
             if i % report_freq == 0:
                 print(f"{count}: accuracy={accuracy.item()/count}")
+                loss_values.append(loss.item())
+                report_count.append(count)
 
             if count > dataset_size * (epoch_count+1):
                 print(f"{epoch_count+1} time epoch end")
-                loss_values.append(loss.item())
                 epoch_count += 1
                 if hyperparams["lr_scheduler"]:
                     lr_scheduler.step()
@@ -62,7 +70,7 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
             break
 
     plt.plot(loss_values)
-    plt.xlabel('Epoch')
+    plt.xlabel('Count')
     plt.ylabel('Loss')
     plt.show()
 

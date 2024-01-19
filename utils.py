@@ -2,7 +2,6 @@ import csv
 
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
 from transformers import BertForSequenceClassification
 
@@ -26,8 +25,8 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
     print("traing...")
     network.train()
 
-    optimizer = hyperparams["optimizer"] or torch.optim.Adam(network.parameters(), lr=hyperparams["learning_rate"])
-    loss_fn = hyperparams["loss_fn"] or nn.NLLLoss()
+    optimizer = hyperparams["optimizer"]
+    loss_fn = hyperparams["loss_fn"]
     if hyperparams["lr_scheduler"]:
         lr_scheduler = StepLR(optimizer, hyperparams["lr_scheduler"]["step_size"], hyperparams["lr_scheduler"]["gamma"])
 

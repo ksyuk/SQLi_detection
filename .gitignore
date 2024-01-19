@@ -1,6 +1,7 @@
 __pycache__/
 venv/
 model/
+model_transformers/
 lightning_logs/
 
 .DS_Store

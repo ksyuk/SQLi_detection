@@ -84,28 +84,51 @@ def test_model(model, test_loader, device):
     false_negatives = 0
 
     with torch.no_grad():
-        for queries, labels, raw_queries in test_loader:
-            queries, labels = queries.to(device), labels.to(device)
-            out = model(queries)
-            _, preds = torch.max(out, 1)
+        if model.__class__ == BertForSequenceClassification:
+            for batch_data in test_loader:
+                out = model(**batch_data)
+                _, preds = torch.max(out.logits, 1)
 
-            for label, pred, raw_query in zip(labels, preds, raw_queries):
-                label = label.item()
-                pred = pred.item()
-                if label == 1:
-                    if pred == 1:
-                        true_positives += 1
+                for label, pred in zip(batch_data['labels'], preds):
+                    label = label.item()
+                    pred = pred.item()
+                    if label == 1:
+                        if pred == 1:
+                            true_positives += 1
+                        else:
+                            with open('false_negatives.txt', 'a') as f:
+                                f.write(f'query: {raw_query}\n')
+                            false_negatives += 1
                     else:
-                        false_negatives += 1
-                        with open('false_negatives.txt', 'a') as f:
-                            f.write(f'query: {raw_query}\n')
-                else:
-                    if pred == 0:
-                        true_negatives += 1
+                        if pred == 0:
+                            true_negatives += 1
+                        else:
+                            false_positives += 1
+                            with open('false_positives.txt', 'a') as f:
+                                f.write(f'query: {raw_query}\n')
+        else:
+            for queries, labels, raw_queries in test_loader:
+                queries, labels = queries.to(device), labels.to(device)
+                out = model(queries)
+                _, preds = torch.max(out, 1)
+
+                for label, pred, raw_query in zip(labels, preds, raw_queries):
+                    label = label.item()
+                    pred = pred.item()
+                    if label == 1:
+                        if pred == 1:
+                            true_positives += 1
+                        else:
+                            false_negatives += 1
+                            with open('false_negatives.txt', 'a') as f:
+                                f.write(f'query: {raw_query}\n')
                     else:
-                        false_positives += 1
-                        with open('false_positives.txt', 'a') as f:
-                            f.write(f'query: {raw_query}\n')
+                        if pred == 0:
+                            true_negatives += 1
+                        else:
+                            false_positives += 1
+                            with open('false_positives.txt', 'a') as f:
+                                f.write(f'query: {raw_query}\n')
 
     print(f'true_positives: {true_positives}')
     print(f'false_positives: {false_positives}')

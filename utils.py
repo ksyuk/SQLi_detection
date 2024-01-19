@@ -1,4 +1,5 @@
 import csv
+import time
 
 import matplotlib.pyplot as plt
 import torch
@@ -21,6 +22,13 @@ def load_dataset(dataset_path):
     return dataset
 
 
+def count_model_parameters(model):
+    num_params = sum(p.numel() for p in model.parameters())
+    with open('result.txt', 'a') as f:
+        f.write(f'parameters: {num_params}\n')
+        f.write('\n')
+
+
 def train_model(network, dataloader, device, dataset_size, report_freq, hyperparams):
     print("traing...")
     network.train()
@@ -34,6 +42,8 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
     count, epoch_count = 0, 0
     loss_values = []
     report_count = []
+
+    start_time = time.time()
 
     while True:
         for i, (features, labels) in enumerate(dataloader, 1):
@@ -68,12 +78,15 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
         if epoch_count == hyperparams["epoch"]:
             break
 
-    plt.plot(loss_values)
+    end_time = time.time()
+    with open('result.txt', 'a') as f:
+        f.write(f'training_time: {end_time - start_time}\n')
+        f.write('\n')
+
+    plt.plot(report_count, loss_values)
     plt.xlabel('Count')
     plt.ylabel('Loss')
     plt.show()
-
-    return total_loss/count, accuracy.item()/count
 
 
 def test_model(model, test_loader, device):
@@ -129,11 +142,13 @@ def test_model(model, test_loader, device):
                             with open('false_positives.txt', 'a') as f:
                                 f.write(f'query: {raw_query}\n')
 
-    print(f'true_positives: {true_positives}')
-    print(f'false_positives: {false_positives}')
-    print(f'true_negatives: {true_negatives}')
-    print(f'false_negatives: {false_negatives}')
-    print(f'accuracy: {(true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives)}')
-    print(f'precision: {true_positives / (true_positives + false_positives)}')
-    print(f'recall: {true_positives / (true_positives + false_negatives)}')
-    print(f'f1: {2 * true_positives / (2 * true_positives + false_positives + false_negatives)}')
+    with open('result.txt', 'a') as f:
+        f.write(f'true_positives: {true_positives}\n')
+        f.write(f'false_positives: {false_positives}\n')
+        f.write(f'true_negatives: {true_negatives}\n')
+        f.write(f'false_negatives: {false_negatives}\n')
+        f.write('\n')
+        f.write(f'accuracy: {(true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives)}\n')
+        f.write(f'precision: {true_positives / (true_positives + false_positives)}\n')
+        f.write(f'recall: {true_positives / (true_positives + false_negatives)}\n')
+        f.write(f'f1: {2 * true_positives / (2 * true_positives + false_positives + false_negatives)}\n')

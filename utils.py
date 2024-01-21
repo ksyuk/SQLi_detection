@@ -1,4 +1,5 @@
 import csv
+import statistics
 import time
 
 import matplotlib.pyplot as plt
@@ -27,6 +28,20 @@ def count_model_parameters(model):
     with open('result.txt', 'a') as f:
         f.write(f'parameters: {num_params}\n')
         f.write('\n')
+
+
+def plot_loss(report_count, loss_values):
+    plt.plot(report_count, loss_values)
+    plt.xlabel('Count')
+    plt.ylabel('Loss')
+    plt.show()
+
+
+def plot_inference_time_histogram(inference_time, bins='auto'):
+    plt.hist(inference_time, bins=bins, edgecolor='black')
+    plt.xlabel('Inference Time')
+    plt.ylabel('Count')
+    plt.show()
 
 
 def train_model(network, dataloader, device, dataset_size, report_freq, hyperparams):
@@ -83,66 +98,38 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
         f.write(f'training_time: {end_time - start_time}\n')
         f.write('\n')
 
-    plt.plot(report_count, loss_values)
-    plt.xlabel('Count')
-    plt.ylabel('Loss')
-    plt.show()
+    plot_loss(report_count, loss_values)
 
 
-def test_model(model, test_loader, device):
-    true_positives = 0
-    false_positives = 0
-    true_negatives = 0
-    false_negatives = 0
-
-    with torch.no_grad():
-        if model.__class__ == BertForSequenceClassification:
-            for batch_data in test_loader:
-                out = model(**batch_data)
-                _, preds = torch.max(out.logits, 1)
-
-                for label, pred in zip(batch_data['labels'], preds):
-                    label = label.item()
-                    pred = pred.item()
-                    if label == 1:
-                        if pred == 1:
-                            true_positives += 1
-                        else:
-                            with open('false_negatives.txt', 'a') as f:
-                                f.write(f'query: {raw_query}\n')
-                            false_negatives += 1
-                    else:
-                        if pred == 0:
-                            true_negatives += 1
-                        else:
-                            false_positives += 1
-                            with open('false_positives.txt', 'a') as f:
-                                f.write(f'query: {raw_query}\n')
+def calculate_classification_metric(classification_counts, labels, preds, raw_queries):
+    for label, pred, raw_query in zip(labels, preds, raw_queries):
+        label = label.item()
+        pred = pred.item()
+        if label == 1:
+            if pred == 1:
+                classification_counts['true_positives'] += 1
+            else:
+                with open('false_negatives.txt', 'a') as f:
+                    f.write(f'{raw_query}\n')
+                classification_counts['false_negatives'] += 1
         else:
-            for queries, labels, raw_queries in test_loader:
-                queries, labels = queries.to(device), labels.to(device)
-                out = model(queries)
-                _, preds = torch.max(out, 1)
+            if pred == 0:
+                classification_counts['true_negatives'] += 1
+            else:
+                classification_counts['false_positives'] += 1
+                with open('false_positives.txt', 'a') as f:
+                    f.write(f'{raw_query}\n')
 
-                for label, pred, raw_query in zip(labels, preds, raw_queries):
-                    label = label.item()
-                    pred = pred.item()
-                    if label == 1:
-                        if pred == 1:
-                            true_positives += 1
-                        else:
-                            false_negatives += 1
-                            with open('false_negatives.txt', 'a') as f:
-                                f.write(f'query: {raw_query}\n')
-                    else:
-                        if pred == 0:
-                            true_negatives += 1
-                        else:
-                            false_positives += 1
-                            with open('false_positives.txt', 'a') as f:
-                                f.write(f'query: {raw_query}\n')
 
+def write_classification_metric(classification_counts, inference_time):
+    true_positives = classification_counts['true_positives']
+    false_positives = classification_counts['false_positives']
+    true_negatives = classification_counts['true_negatives']
+    false_negatives = classification_counts['false_negatives']
     with open('result.txt', 'a') as f:
+        f.write(f'inference time median: {statistics.median(inference_time)}\n')
+        f.write(f'inference time max: {max(inference_time)}\n')
+        f.write('\n')
         f.write(f'true_positives: {true_positives}\n')
         f.write(f'false_positives: {false_positives}\n')
         f.write(f'true_negatives: {true_negatives}\n')
@@ -152,3 +139,37 @@ def test_model(model, test_loader, device):
         f.write(f'precision: {true_positives / (true_positives + false_positives)}\n')
         f.write(f'recall: {true_positives / (true_positives + false_negatives)}\n')
         f.write(f'f1: {2 * true_positives / (2 * true_positives + false_positives + false_negatives)}\n')
+
+
+def test_model(model, test_loader, device):
+    classification_counts = {
+        'true_positives': 0,
+        'false_positives': 0,
+        'true_negatives': 0,
+        'false_negatives': 0
+    }
+    inference_time = []
+
+    with torch.no_grad():
+        if model.__class__ == BertForSequenceClassification:
+            for batch_data in test_loader:
+                start_time = time.time()
+                out = model(**batch_data)
+                inference_time.append(time.time() - start_time)
+
+                _, preds = torch.max(out.logits, 1)
+
+                calculate_classification_metric(classification_counts, batch_data['labels'], preds, batch_data['raw_queries'])
+        else:
+            for queries, labels, raw_queries in test_loader:
+                queries, labels = queries.to(device), labels.to(device)
+
+                start_time = time.time()
+                out = model(queries)
+                inference_time.append(time.time() - start_time)
+
+                _, preds = torch.max(out, 1)
+
+                calculate_classification_metric(classification_counts, labels, preds, raw_queries)
+
+    write_classification_metric(classification_counts, inference_time)

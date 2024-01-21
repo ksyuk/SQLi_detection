@@ -10,7 +10,7 @@ def split_dataset(filename):
     random.shuffle(dataset)
 
     train_size = int(len(dataset) * 0.6)
-    val_size = int(len(dataset) * 0.3)
+    val_size = int(len(dataset) * 0.2)
     train_dataset = dataset[:train_size]
     val_dataset = dataset[train_size:train_size + val_size]
     test_dataset = dataset[train_size + val_size:]
@@ -90,6 +90,7 @@ if __name__ == '__main__':
 
     # split_dataset("./tmp.csv")
 
+    # count_label("./tmp.csv")
     count_label("./train.csv")
     count_label("./validation.csv")
     count_label("./test.csv")

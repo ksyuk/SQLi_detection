@@ -10,16 +10,12 @@ from transformers import BertForSequenceClassification
 
 def load_dataset(dataset_path):
     dataset = []
-    removed = 0
     with open(dataset_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)
         for row in reader:
             if len(row) == 2:
                 dataset.append(row)
-            else:
-                removed += 1
-    print(f"removed: {removed}")
     return dataset
 
 
@@ -31,20 +27,20 @@ def count_model_parameters(model):
 
 
 def plot_loss(report_count, loss_values):
-    plt.plot(report_count, loss_values)
+    plt.plot(report_count, loss_values, color='dimgray')
     plt.xlabel('Count')
     plt.ylabel('Loss')
     plt.show()
 
 
 def plot_inference_time_histogram(inference_time, bins='auto'):
-    plt.hist(inference_time, bins=bins, edgecolor='black')
+    plt.hist(inference_time, bins=bins, color='dimgray')
     plt.xlabel('Inference Time')
     plt.ylabel('Count')
     plt.show()
 
 
-def train_model(network, dataloader, device, dataset_size, report_freq, hyperparams):
+def train_model(network, dataloader, dataset_size, report_freq, hyperparams):
     print("traing...")
     network.train()
 
@@ -62,17 +58,14 @@ def train_model(network, dataloader, device, dataset_size, report_freq, hyperpar
 
     while True:
         for i, (features, labels) in enumerate(dataloader, 1):
-            features, labels = features.to(device), labels.to(device)
-
             optimizer.zero_grad()
             out = network(features)
             if type(out) == int:
                 continue
             loss = loss_fn(out, labels)
-
+            total_loss += loss.item()
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
 
             _, predicted = torch.max(out, 1)
             accuracy += (predicted==labels).sum()
@@ -141,7 +134,7 @@ def write_classification_metric(classification_counts, inference_time):
         f.write(f'f1: {2 * true_positives / (2 * true_positives + false_positives + false_negatives)}\n')
 
 
-def test_model(model, test_loader, device):
+def test_model(model, test_loader):
     classification_counts = {
         'true_positives': 0,
         'false_positives': 0,
@@ -162,8 +155,6 @@ def test_model(model, test_loader, device):
                 calculate_classification_metric(classification_counts, batch_data['labels'], preds, batch_data['raw_queries'])
         else:
             for queries, labels, raw_queries in test_loader:
-                queries, labels = queries.to(device), labels.to(device)
-
                 start_time = time.time()
                 out = model(queries)
                 inference_time.append(time.time() - start_time)
@@ -173,3 +164,4 @@ def test_model(model, test_loader, device):
                 calculate_classification_metric(classification_counts, labels, preds, raw_queries)
 
     write_classification_metric(classification_counts, inference_time)
+    plot_inference_time_histogram(inference_time)

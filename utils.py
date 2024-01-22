@@ -39,17 +39,33 @@ def plot_inference_time_histogram(inference_time, bins='auto'):
     plt.ylabel('Count')
     plt.show()
 
+def evaluate(network, dataloader):
+    network.eval()
 
-def train_model(network, dataloader, dataset_size, report_freq, hyperparams):
-    print("traing...")
+    with torch.no_grad():
+        total, correct = 0, 0
+        for features, labels in dataloader:
+            out = network(features)
+            if type(out) == int:
+                continue
+            _, predicted = torch.max(out, 1)
+            total += labels.size(0)
+            correct += (predicted==labels).sum()
+
+    print(f"accuracy={correct.item()/total}")
+    return correct.item()/total
+
+
+def train_model(network, train_dataloader, validation_dataloader, dataset_size, report_freq, hyperparams):
+    print('training...')
     network.train()
 
-    optimizer = hyperparams["optimizer"]
-    loss_fn = hyperparams["loss_fn"]
-    if hyperparams["lr_scheduler"]:
-        lr_scheduler = StepLR(optimizer, hyperparams["lr_scheduler"]["step_size"], hyperparams["lr_scheduler"]["gamma"])
+    optimizer = hyperparams['optimizer']
+    loss_fn = hyperparams['loss_fn']
+    if hyperparams['lr_scheduler']:
+        lr_scheduler = StepLR(optimizer, hyperparams['lr_scheduler']['step_size'], hyperparams['lr_scheduler']['gamma'])
 
-    total_loss, accuracy = 0, 0
+    total_loss, accuracy, best_val_accuracy = 0, 0, 0
     count, epoch_count = 0, 0
     loss_values = []
     report_count = []
@@ -57,7 +73,7 @@ def train_model(network, dataloader, dataset_size, report_freq, hyperparams):
     start_time = time.time()
 
     while True:
-        for i, (features, labels) in enumerate(dataloader, 1):
+        for i, (features, labels) in enumerate(train_dataloader, 1):
             optimizer.zero_grad()
             out = network(features)
             if type(out) == int:
@@ -72,18 +88,23 @@ def train_model(network, dataloader, dataset_size, report_freq, hyperparams):
             count += len(labels)
 
             if i % report_freq == 0:
-                print(f"{count}: accuracy={accuracy.item()/count}")
+                print(f'{count}: accuracy={accuracy.item()/count}')
                 loss_values.append(loss.item())
                 report_count.append(count)
 
+                val_accuracy = evaluate(network, validation_dataloader)
+                if val_accuracy > best_val_accuracy:
+                    best_val_accuracy = val_accuracy
+                    torch.save(network.state_dict(), 'model.pth')
+
             if count > dataset_size * (epoch_count+1):
-                print(f"{epoch_count+1} time epoch end")
+                print(f'{epoch_count+1} time epoch end')
                 epoch_count += 1
-                if hyperparams["lr_scheduler"]:
+                if hyperparams['lr_scheduler']:
                     lr_scheduler.step()
                 break
 
-        if epoch_count == hyperparams["epoch"]:
+        if epoch_count == hyperparams['epoch']:
             break
 
     end_time = time.time()

@@ -52,13 +52,12 @@ def evaluate(network, dataloader):
             total += labels.size(0)
             correct += (predicted==labels).sum()
 
-    print(f"accuracy={correct.item()/total}")
+    network.train()
     return correct.item()/total
 
 
 def train_model(network, train_dataloader, validation_dataloader, dataset_size, report_freq, hyperparams):
     print('training...')
-    network.train()
 
     optimizer = hyperparams['optimizer']
     loss_fn = hyperparams['loss_fn']

@@ -167,13 +167,14 @@ def test_model(model, test_loader):
     with torch.no_grad():
         if model.__class__ == BertForSequenceClassification:
             for batch_data in test_loader:
+                raw_queries = batch_data.pop('raw_queries', None)
                 start_time = time.time()
                 out = model(**batch_data)
                 inference_time.append(time.time() - start_time)
 
                 _, preds = torch.max(out.logits, 1)
 
-                calculate_classification_metric(classification_counts, batch_data['labels'], preds, batch_data['raw_queries'])
+                calculate_classification_metric(classification_counts, batch_data['labels'], preds, raw_queries)
         else:
             for queries, labels, raw_queries in test_loader:
                 start_time = time.time()

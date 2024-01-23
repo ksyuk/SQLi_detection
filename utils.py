@@ -92,7 +92,7 @@ def train_model(network, train_dataloader, validation_dataloader, dataset_size, 
                 report_count.append(count)
 
                 val_accuracy = evaluate(network, validation_dataloader)
-                if val_accuracy > best_val_accuracy:
+                if val_accuracy > best_val_accuracy and hyperparams['epoch'] - epoch_count == 1:
                     best_val_accuracy = val_accuracy
                     torch.save(network.state_dict(), 'model.pth')
 

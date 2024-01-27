@@ -39,6 +39,7 @@ def plot_inference_time_histogram(inference_time, bins='auto'):
     plt.ylabel('Count')
     plt.show()
 
+
 def evaluate(network, dataloader):
     network.eval()
 
@@ -56,7 +57,7 @@ def evaluate(network, dataloader):
     return correct.item()/total
 
 
-def train_model(network, train_dataloader, validation_dataloader, dataset_size, report_freq, hyperparams):
+def train_model(network, train_dataloader, val_dataloader, dataset_size, report_freq, hyperparams):
     print('training...')
 
     optimizer = hyperparams['optimizer']
@@ -91,7 +92,7 @@ def train_model(network, train_dataloader, validation_dataloader, dataset_size, 
                 loss_values.append(loss.item())
                 report_count.append(count)
 
-                val_accuracy = evaluate(network, validation_dataloader)
+                val_accuracy = evaluate(network, val_dataloader)
                 if val_accuracy > best_val_accuracy and hyperparams['epoch'] - epoch_count == 1:
                     best_val_accuracy = val_accuracy
                     torch.save(network.state_dict(), 'model.pth')
@@ -116,8 +117,9 @@ def train_model(network, train_dataloader, validation_dataloader, dataset_size, 
 
 def calculate_classification_metric(classification_counts, labels, preds, raw_queries):
     for label, pred, raw_query in zip(labels, preds, raw_queries):
-        label = label.item()
-        pred = pred.item()
+        if isinstance(label, torch.Tensor):
+            label = label.item()
+            pred = pred.item()
         if label == 1:
             if pred == 1:
                 classification_counts['true_positives'] += 1

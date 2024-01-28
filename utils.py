@@ -190,4 +190,3 @@ def test_model(model, test_loader):
                 calculate_classification_metric(classification_counts, labels, preds, raw_queries)
 
     write_classification_metric(classification_counts, inference_time)
-    plot_inference_time_histogram(inference_time)

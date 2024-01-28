@@ -179,7 +179,10 @@ def test_model(model, test_loader):
         else:
             for queries, labels, raw_queries in test_loader:
                 start_time = time.time()
-                out = model(queries)
+                try:
+                    out = model(queries)
+                except RuntimeError:
+                    print(raw_queries)
                 inference_time.append(time.time() - start_time)
 
                 _, preds = torch.max(out, 1)

@@ -9,11 +9,9 @@ def split_dataset(filename):
     dataset = load_dataset(filename)
     random.shuffle(dataset)
 
-    train_size = int(len(dataset) * 0.6)
-    val_size = int(len(dataset) * 0.2)
-    train_dataset = dataset[:train_size]
-    val_dataset = dataset[train_size:train_size + val_size]
-    test_dataset = dataset[train_size + val_size:]
+    test_dataset = dataset[:6500]
+    val_dataset = dataset[6500:13000]
+    train_dataset = dataset[13000:]
 
     with open("train.csv", 'a') as file:
         file.write("query,label\n")

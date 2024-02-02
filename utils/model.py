@@ -1,46 +1,15 @@
 import csv
-import statistics
 import time
 
-import matplotlib.pyplot as plt
 import torch
 from torch.optim.lr_scheduler import StepLR
 from transformers import BertForSequenceClassification
 
-
-def load_dataset(dataset_path):
-    dataset = []
-    with open(dataset_path, 'r') as file:
-        reader = csv.reader(file)
-        next(reader)
-        for row in reader:
-            if len(row) == 2:
-                dataset.append(row)
-    return dataset
+from plot import plot_loss
+from result import calculate_classification_metric, write_classification_metric
 
 
-def count_model_parameters(model):
-    num_params = sum(p.numel() for p in model.parameters())
-    with open('result.txt', 'a') as f:
-        f.write(f'parameters: {num_params}\n')
-        f.write('\n')
-
-
-def plot_loss(report_count, loss_values):
-    plt.plot(report_count, loss_values, color='dimgray')
-    plt.xlabel('Count')
-    plt.ylabel('Loss')
-    plt.show()
-
-
-def plot_inference_time_histogram(inference_time, bins='auto'):
-    plt.hist(inference_time, bins=bins, color='dimgray')
-    plt.xlabel('Inference Time')
-    plt.ylabel('Count')
-    plt.show()
-
-
-def evaluate(network, dataloader):
+def evaluate_model(network, dataloader):
     network.eval()
 
     with torch.no_grad():
@@ -92,7 +61,7 @@ def train_model(network, train_dataloader, val_dataloader, dataset_size, report_
                 loss_values.append(loss.item())
                 report_count.append(count)
 
-                val_accuracy = evaluate(network, val_dataloader)
+                val_accuracy = evaluate_model(network, val_dataloader)
                 if val_accuracy > best_val_accuracy and hyperparams['epoch'] - epoch_count == 1:
                     best_val_accuracy = val_accuracy
                     torch.save(network.state_dict(), 'model.pth')
@@ -113,47 +82,6 @@ def train_model(network, train_dataloader, val_dataloader, dataset_size, report_
         f.write('\n')
 
     plot_loss(report_count, loss_values)
-
-
-def calculate_classification_metric(classification_counts, labels, preds, raw_queries):
-    for label, pred, raw_query in zip(labels, preds, raw_queries):
-        if isinstance(label, torch.Tensor):
-            label = label.item()
-            pred = pred.item()
-        if label == 1:
-            if pred == 1:
-                classification_counts['true_positives'] += 1
-            else:
-                with open('false_negatives.txt', 'a') as f:
-                    f.write(f'{raw_query}\n')
-                classification_counts['false_negatives'] += 1
-        else:
-            if pred == 0:
-                classification_counts['true_negatives'] += 1
-            else:
-                classification_counts['false_positives'] += 1
-                with open('false_positives.txt', 'a') as f:
-                    f.write(f'{raw_query}\n')
-
-
-def write_classification_metric(classification_counts, inference_time):
-    true_positives = classification_counts['true_positives']
-    false_positives = classification_counts['false_positives']
-    true_negatives = classification_counts['true_negatives']
-    false_negatives = classification_counts['false_negatives']
-    with open('result.txt', 'a') as f:
-        f.write(f'inference time median: {statistics.median(inference_time)}\n')
-        f.write(f'inference time max: {max(inference_time)}\n')
-        f.write('\n')
-        f.write(f'true_positives: {true_positives}\n')
-        f.write(f'false_positives: {false_positives}\n')
-        f.write(f'true_negatives: {true_negatives}\n')
-        f.write(f'false_negatives: {false_negatives}\n')
-        f.write('\n')
-        f.write(f'accuracy: {(true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives)}\n')
-        f.write(f'precision: {true_positives / (true_positives + false_positives)}\n')
-        f.write(f'recall: {true_positives / (true_positives + false_negatives)}\n')
-        f.write(f'f1: {2 * true_positives / (2 * true_positives + false_positives + false_negatives)}\n')
 
 
 def test_model(model, test_loader):

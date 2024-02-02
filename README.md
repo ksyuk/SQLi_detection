@@ -1,4 +1,21 @@
-# Dataset  
+# SQL injection attack detection by Deep Leaning and LLM
+
+Creating SQL injection attack detection models using CNN, BiLSTM, and BERT. Also prompt engineering to detect attack using GPT3.5, GPT4, Llama2-7B, and Mistral-7B.
+
+## Prerequiresed for LLM
+### GPT
+```
+Setting up Open AI API
+```
+
+### Llama, Mistral
+```
+Hugging Face account
+Access right to Llama2
+High-performance GPU
+```
+
+## Dataset  
 1. Download dataset in kaggle.  
 https://www.kaggle.com/datasets/syedsaqlainhussain/sql-injection-dataset  
 
@@ -8,12 +25,15 @@ https://www.kaggle.com/datasets/syedsaqlainhussain/sql-injection-dataset
 
 4. Set all files to utf-8 character encoding.  
 
-# Virtual Environment
+5. Edit the dataset by using files in `dataset/edit_dataset.py`.
+
+## Virtual Environment
 ```zsh
 python3 -m venv venv
 ```
 
 ```zsh
+(Linux/Mac)
 source venv/bin/activate
 ```
 

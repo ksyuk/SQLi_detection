@@ -25,7 +25,7 @@ https://www.kaggle.com/datasets/syedsaqlainhussain/sql-injection-dataset
 
 4. Set all files to utf-8 character encoding.  
 
-5. Edit the dataset by using files in `dataset/edit_dataset.py`.
+5. Edit the dataset by using functions in `dataset/edit_dataset.py`.
 
 ## Virtual Environment
 ```zsh

@@ -1,8 +1,20 @@
+import csv
 import random
 import sys
 sys.path.insert(0, '../')
 
-from utils import load_dataset
+from utils.model import load_dataset
+
+
+def load_dataset(dataset_path):
+    dataset = []
+    with open(dataset_path, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)
+        for row in reader:
+            if len(row) == 2:
+                dataset.append(row)
+    return dataset
 
 
 def split_dataset(filename):

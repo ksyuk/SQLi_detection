@@ -1,12 +1,11 @@
-import csv
 import time
 
 import torch
 from torch.optim.lr_scheduler import StepLR
 from transformers import BertForSequenceClassification
 
-from plot import plot_loss
-from result import calculate_classification_metric, write_classification_metric
+from .plot import plot_loss
+from .result import calculate_classification_metric, write_classification_metric
 
 
 def evaluate_model(network, dataloader):

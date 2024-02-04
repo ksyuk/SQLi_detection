@@ -1,9 +1,5 @@
 import csv
 import random
-import sys
-sys.path.insert(0, '../')
-
-from utils.model import load_dataset
 
 
 def load_dataset(dataset_path):
